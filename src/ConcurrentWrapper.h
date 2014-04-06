@@ -23,13 +23,13 @@ namespace concurrent {
   //     shared_string([](string& str){ str.append("Hello");});
   // helper for setting promise/exception
   template<typename Fut, typename F, typename T>
-  void set_value(std::promise<Fut>& p, F& f, T&t) {
+  void set_value(std::promise<Fut>& p, F& f, T& t) {
     p.set_value(f(t));
   }
 
 // helper for setting promise/exception for promise of void
   template<typename F, typename T>
-  void set_value(std::promise<void>& p, F& f, T&t) {
+  void set_value(std::promise<void>& p, F& f, T& t) {
     f(t);
     p.set_value();
   }
@@ -40,7 +40,7 @@ namespace concurrent {
   // all input happens in the background. At shutdown it exits only after all 
   // queued requests are handled.
   template <class T> class ConcurrentWrapper {
-    mutable T t;
+    mutable T _worker;
     mutable shared_queue<concurrent::Callback> q;
     bool done = false;  // not atomic since only the bg thread is touching it
     std::thread thd;
@@ -54,10 +54,12 @@ namespace concurrent {
     }
 
   public:
-    ConcurrentWrapper(T t_) 
-    : t(t_), 
+    template<typename ... Args>
+    ConcurrentWrapper(Args&&... args) 
+    : _worker(std::forward<Args>(args)...), 
      thd([ = ]{concurrent::Callback call; while (!done) { q.wait_and_pop(call); call();   }}) 
      { }
+
 
     ~ConcurrentWrapper() {
       q.push([ = ]{done = true;});
@@ -66,12 +68,12 @@ namespace concurrent {
 
 
     template<typename F>
-    auto operator()(F f) const -> std::future<decltype(f(t))> {
-      auto p = std::make_shared < std::promise < decltype(f(t)) >> ();
+    auto operator()(F f) const -> std::future<decltype(f(_worker))> {
+      auto p = std::make_shared<std::promise <decltype(f(_worker)) >> ();
       auto future_result = p->get_future();
       q.push([ = ]{
         try {
-          concurrent::set_value(*p, f, t); }        catch (...) {
+          concurrent::set_value(*p, f, _worker); }        catch (...) {
           p->set_exception(std::current_exception()); }
       });
       return future_result;
