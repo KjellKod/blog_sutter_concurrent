@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <string>
-#include "concurrent.h"
+#include "concurrent.hpp"
 #include <vector>
 #include <atomic>
 #include <iostream>
@@ -44,10 +44,31 @@ TEST(TestOfconcurrent, CompilerCheckForEmptyStruct) {
    concurrent<DummyObject> doNothing3 = {};
 }
 
-TEST(TestOfconcurrent, CompilerCheckForString) {
-   concurrent<std::string> doNothing1{"start"};
-   concurrent<std::string> doNothing2 = {"start"};
+
+
+namespace {
+   struct Animal {
+      virtual void sound() = 0;
+   };
+   struct Dog : public Animal {
+      void sound() override { std::cout << "Wof Wof" << std::endl; }
+   };
+   
+   struct Cat : public Animal {
+     void sound() override { std::cout << "Miauu Miauu" << std::endl; }
+   };
 }
+
+TEST(TestOfConcurrent, CompilerCheckUniquePtrTest) {
+   typedef std::unique_ptr<Animal> RaiiAnimal;
+   concurrent<RaiiAnimal> animal1 {new Dog};
+   concurrent<RaiiAnimal> animal2 {new Cat};
+   
+   auto make_sound = []( RaiiAnimal& animal ) { animal->sound(); };
+   animal1(make_sound);   
+   animal2(make_sound);   
+}
+
 
 TEST(TestOfconcurrent, VerifyDestruction) {
    std::atomic<bool> flag{true};
