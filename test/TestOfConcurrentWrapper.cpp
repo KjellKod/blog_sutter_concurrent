@@ -38,7 +38,7 @@ namespace {
 }
 
    
-TEST(TestOfconcurrent, CompilerCheckForEmptyStruct) {
+TEST(TestOfConcurrent, CompilerCheckForEmptyStruct) {
    concurrent<DummyObject> doNothing1{};
    concurrent<DummyObject> doNothing2;
    concurrent<DummyObject> doNothing3 = {};
@@ -48,14 +48,14 @@ TEST(TestOfconcurrent, CompilerCheckForEmptyStruct) {
 
 namespace {
    struct Animal {
-      virtual void sound() = 0;
+      virtual std::string sound() = 0;
    };
    struct Dog : public Animal {
-      void sound() override { std::cout << "Wof Wof" << std::endl; }
+      std::string sound() override { return {"Wof Wof"}; }
    };
    
    struct Cat : public Animal {
-     void sound() override { std::cout << "Miauu Miauu" << std::endl; }
+     std::string sound() override { return {"Miauu Miauu"}; }
    };
 }
 
@@ -64,13 +64,13 @@ TEST(TestOfConcurrent, CompilerCheckUniquePtrTest) {
    concurrent<RaiiAnimal> animal1 {new Dog};
    concurrent<RaiiAnimal> animal2 {new Cat};
    
-   auto make_sound = []( RaiiAnimal& animal ) { animal->sound(); };
-   animal1(make_sound);   
-   animal2(make_sound);   
+   auto make_sound = []( RaiiAnimal& animal ) { return animal->sound(); };
+   EXPECT_EQ("Wof Wof", animal1(make_sound).get());   
+   EXPECT_EQ("Miauu Miauu", animal2(make_sound).get());   
 }
 
 
-TEST(TestOfconcurrent, VerifyDestruction) {
+TEST(TestOfConcurrent, VerifyDestruction) {
    std::atomic<bool> flag{true};
    {
       concurrent<TrueAtExit> notifyAtExit1{&flag};
@@ -84,7 +84,7 @@ TEST(TestOfconcurrent, VerifyDestruction) {
    EXPECT_TRUE(flag); // notifyAtExit destructor
 }
 
-TEST(TestOfconcurrent, VerifyFifoCalls) {
+TEST(TestOfConcurrent, VerifyFifoCalls) {
 
    concurrent<std::string> asyncString = {"start"};
    auto received = asyncString([](std::string & s) { s.append(" received message"); return std::string{s}; });
@@ -104,7 +104,7 @@ TEST(TestOfconcurrent, VerifyFifoCalls) {
    EXPECT_EQ(appended.get(), toCompare);
 }
 
-TEST(TestOfconcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
+TEST(TestOfConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
 
    typedef std::chrono::steady_clock clock;
    auto start = clock::now();
