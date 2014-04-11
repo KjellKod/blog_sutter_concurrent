@@ -7,6 +7,7 @@
 #include <random>
 #include <thread>
 #include <future>
+#include <cassert>
 #include <iostream>
 #include "concurrent.hpp"
 
@@ -65,8 +66,15 @@ namespace {
       , _is_flipped(false), _counter(0), _attempts(0) { }
 
       ~FlipOnce() {
-         (*_stored_counter) = _counter;
-         (*_stored_attempts) = _attempts;
+         if (0 == *_stored_counter) {
+            std::cout << "FlipOnce was with no atomics in the doFlip operation " << std::endl;
+            (*_stored_counter) = _counter;
+            (*_stored_attempts) = _attempts;
+         } else {
+            std::cout << "FlipOnce was WITH atomics in the doFlipAtomic operation " << std::endl;
+            assert(0==_counter);
+            assert(0==_attempts);
+         }
       }
 
       // Void flip will  count up NON ATOMIC internal variables. They are non atomic to avoid 
@@ -79,6 +87,15 @@ namespace {
             _counter++;
          }
          _attempts++;
+      }
+
+      void doFlipAtomic() {
+            if (!_is_flipped) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(random_int(0, 1000)));
+            _is_flipped = true;
+            (*_stored_counter)++;
+         }
+         (*_stored_attempts)++;
       }
    };
    
@@ -205,4 +222,42 @@ TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__Wait1Minute) {
       ASSERT_EQ(10, total_thread_access);
    }
 }
+
+std::future<void> DoAFlipAtomic(concurrent<FlipOnce>& flipper) {
+   return flipper([] (FlipOnce & obj) {
+      obj.doFlipAtomic(); });
+}
+TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__AtomicInside_Wait1Minute) {
+   auto start = clock::now();
+
+   for (size_t howmanyflips = 0; howmanyflips < 60; ++howmanyflips) {
+      std::atomic<size_t> count_of_flip{0};
+      std::atomic<size_t> total_thread_access{0};
+      {
+         concurrent<FlipOnce> flipOnceObject{&count_of_flip, &total_thread_access};
+         ASSERT_EQ(0, count_of_flip);
+         auto try0 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
+         auto try1 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
+         auto try2 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
+         auto try3 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
+         auto try4 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
+         auto try5 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
+         auto try6 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
+         auto try7 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
+         auto try8 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
+         auto try9 = std::async(std::launch::async, DoAFlipAtomic, std::ref(flipOnceObject));
+
+         // scope exit. ALL jobs will be executed before this finished. 
+         //This means that all 10 jobs in the loop must be done
+         // all 10 will wait here till they are finished
+      }
+      auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - start).count();
+      std::cout << "Run 2: " << howmanyflips << ", took: " << total_time << " milliseconds" << std::endl;
+      start = clock::now();
+      ASSERT_EQ(1, count_of_flip);
+      ASSERT_EQ(10, total_thread_access);
+   }
+}
+
+
 
