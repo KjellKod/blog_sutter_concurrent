@@ -194,9 +194,6 @@ TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__Wait1Minute) {
          auto try8 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
          auto try9 = std::async(std::launch::async, DoAFlip, std::ref(flipOnceObject));
 
-         // Sanity check
-         EXPECT_NE(5, total_thread_access); // there is almost no way it should have reached even half-way
-
          // scope exit. ALL jobs will be executed before this finished. 
          //This means that all 10 jobs in the loop must be done
          // all 10 will wait here till they are finished
