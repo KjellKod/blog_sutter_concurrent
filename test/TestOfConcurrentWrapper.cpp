@@ -187,6 +187,44 @@ TEST(TestOfConcurrent, VerifyImmediateReturnForSlowFunctionCalls) {
 
 
 
+void DoAThreadUnsafeFlip(FlipOnce& flipper) {
+      flipper.doFlip();
+}
+TEST(TestOfConcurrent, NonDeterministic__IfNotConcurrentWrappedThisShouldFail__Wait1Minute) {
+   auto start = clock::now();
+
+   for (size_t howmanyflips = 0; howmanyflips < 60; ++howmanyflips) {
+      std::atomic<size_t> count_of_flip{0};
+      std::atomic<size_t> total_thread_access{0};
+      {
+         FlipOnce flipObject{&count_of_flip, &total_thread_access};
+         ASSERT_EQ(0, count_of_flip);
+         auto try0 = std::async(std::launch::async, DoAThreadUnsafeFlip, std::ref(flipObject));
+         auto try1 = std::async(std::launch::async, DoAThreadUnsafeFlip, std::ref(flipObject));
+         auto try2 = std::async(std::launch::async, DoAThreadUnsafeFlip, std::ref(flipObject));
+         auto try3 = std::async(std::launch::async, DoAThreadUnsafeFlip, std::ref(flipObject));
+         auto try4 = std::async(std::launch::async, DoAThreadUnsafeFlip, std::ref(flipObject));
+         auto try5 = std::async(std::launch::async, DoAThreadUnsafeFlip, std::ref(flipObject));
+         auto try6 = std::async(std::launch::async, DoAThreadUnsafeFlip, std::ref(flipObject));
+         auto try7 = std::async(std::launch::async, DoAThreadUnsafeFlip, std::ref(flipObject));
+         auto try8 = std::async(std::launch::async, DoAThreadUnsafeFlip, std::ref(flipObject));
+         auto try9 = std::async(std::launch::async, DoAThreadUnsafeFlip, std::ref(flipObject));
+
+         // scope exit. ALL jobs will be executed before this finished. 
+         //This means that all 10 jobs in the loop must be done
+         // all 10 will wait here till they are finished
+      }
+      auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - start).count();
+      std::cout << "Run 0: " << howmanyflips << ", took: " << total_time << " milliseconds" << std::endl;
+      start = clock::now();
+//      std::cout << "Thread UNSAFE FlipObject. Flipped value: " << count_of_flip << ",. and accessed value: " << total_thread_access << std::endl;
+      ASSERT_NE(1, count_of_flip);
+   }
+}
+
+
+
+
 std::future<void> DoAFlip(concurrent<FlipOnce>& flipper) {
    return flipper([] (FlipOnce & obj) {
       obj.doFlip(); });
@@ -216,7 +254,7 @@ TEST(TestOfConcurrent, IsConcurrentReallyAsyncWithFifoGuarantee__Wait1Minute) {
          // all 10 will wait here till they are finished
       }
       auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - start).count();
-      std::cout << "Run " << howmanyflips << ", took: " << total_time << " milliseconds" << std::endl;
+      std::cout << "Run 1: " << howmanyflips << ", took: " << total_time << " milliseconds" << std::endl;
       start = clock::now();
       ASSERT_EQ(1, count_of_flip);
       ASSERT_EQ(10, total_thread_access);
