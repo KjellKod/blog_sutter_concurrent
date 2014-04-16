@@ -3,7 +3,7 @@
 // From a Herb Sutter Channel 9 presentation 
 //        http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism
 // Published at:
-//      https://github.com/KjellKod/Concurrent and 
+//      https://github.com/KjellKod/blog_sutter_concurrent and 
 //      http://kjellkod.wordpress.com/2014/04/07/concurrency-concurrent-wrapper/
 // 
 // What "concurrent" is
