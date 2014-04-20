@@ -5,7 +5,7 @@ Makes access to *any* object asynchronous. All asynchronous calls will be execut
 Many actions can be bundled together in one asynchronous operation. All calls are made through a lambda call that has to take a reference to the wrapped object as input argument. 
 
 
-The code is modified from [Herb Sutters example of Concurrent object wrapper}(http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism).   
+The code is modified from [Herb Sutters example of Concurrent object wrapper](http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism).   
 
 
 
