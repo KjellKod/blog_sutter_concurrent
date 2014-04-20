@@ -1,4 +1,4 @@
-concurrent<T> wrapper
+concurrent\<T\> wrapper
 =================================
 
 Makes access to *any* object asynchronous. All asynchronous calls will be executed in the background and in FIFO order.
