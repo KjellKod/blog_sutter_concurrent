@@ -153,7 +153,6 @@ TEST(TestOfConcurrent, CompilerCheckUniquePtrTest) {
 }
 
 
-
 TEST(TestOfConcurrent, VerifyDestruction) {
    std::atomic<bool> flag{true};
    {

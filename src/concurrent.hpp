@@ -45,14 +45,6 @@ template <class T> class concurrent {
    bool _done; // not atomic since only the bg thread is touching it
    std::thread _thd;
 
-   void run() const {
-      concurrent_helper::Callback call;
-      while (!_done) {
-         _q.wait_and_pop(call);
-         call();
-      }
-   }
-
    
 public:
    template<typename ... Args>
