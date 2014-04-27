@@ -33,7 +33,7 @@ namespace concurrent_helper {
       f(t);
       p.set_value();
    }
-} // namespace concurrent
+} // namespace concurrent_helper
 
 
 /// Basically a light weight active object. www.kjellkod.cc/active-object-with-cpp0x#TOC-Active-Object-the-C-11-way
